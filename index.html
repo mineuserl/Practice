@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Japanese Vocabulary Practice</title>
+<style>
+    body {
+        background: #000;
+        color: #fff;
+        font-family: sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex; /* To place sidebar and main content side by side */
+        flex-direction: row;
+        height: 100vh;
+    }
+    .sidebar {
+        width: 250px;
+        background: #111;
+        padding: 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
+    }
+    .sidebar h2 {
+        font-size: 1.5em;
+        margin-top: 0;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .sidebar ul {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 20px 0;
+    }
+    .sidebar li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid #333;
+        font-size: 0.9em;
+    }
+    .sidebar li button.delete-btn {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 1em;
+        cursor: pointer;
+        padding: 0 5px;
+    }
+    .sidebar li button.delete-btn:hover {
+        color: #f00;
+    }
+    .sidebar button {
+        width: 100%;
+        padding: 10px;
+        font-size: 1em;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    .sidebar button:hover {
+        background: #444;
+    }
+
+    .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    .container {
+        display: flex;
+        flex-direction: column;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        align-items: center;
+    }
+    h1 {
+        font-size: 2em;
+        margin-bottom: 1em;
+        text-align: center;
+    }
+    form {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 2em;
+    }
+    label {
+        font-weight: bold;
+    }
+    input[type="text"] {
+        padding: 10px;
+        font-size: 1em;
+        background: #222;
+        border: 1px solid #444;
+        color: #fff;
+        border-radius: 4px;
+        width: 100%;
+    }
+    button {
+        padding: 10px;
+        font-size: 1em;
+        background: #333;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.3s;
+        text-align: center;
+    }
+    button:hover {
+        background: #444;
+    }
+    .mode-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .vocab-section, .flashcard-section, .quiz-section {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        width: 100%;
+    }
+    .display-word, .flashcard-word, .quiz-prompt {
+        font-size: 1.5em;
+        text-align: center;
+        word-wrap: break-word;
+        cursor: pointer;
+        padding: 20px;
+        border: 1px solid #444;
+        border-radius: 4px;
+        min-height: 50px;
+        width: 100%;
+        background: #111;
+    }
+    .display-translation, .flashcard-translation {
+        font-size: 1.2em;
+        text-align: center;
+        padding: 10px;
+        background: #222;
+        border-radius: 4px;
+        margin-top: -10px;
+        display: none;
+    }
+    .flashcard-controls, .quiz-controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .quiz-input {
+        padding: 10px;
+        font-size: 1em;
+        background: #222;
+        border: 1px solid #444;
+        color: #fff;
+        border-radius: 4px;
+        width: 100%;
+        text-align: center;
+    }
+    .quiz-score {
+        font-size: 1em;
+        background: #222;
+        padding: 10px;
+        border-radius: 4px;
+    }
+
+    @media (max-width: 600px) {
+        h1 { font-size: 1.8em; }
+        .display-word, .flashcard-word, .quiz-prompt { font-size: 1.2em; }
+        .display-translation, .flashcard-translation { font-size: 1em; }
+        .sidebar {
+            width: 200px;
+        }
+    }
+</style>
+</head>
+<body>
+
+<!-- Sidebar for previous stored vocabulary -->
+<div class="sidebar">
+    <h2>Stored Vocabulary</h2>
+    <ul id="stored-list"></ul>
+    <button id="use-stored-btn">Use Stored Vocabulary</button>
+</div>
+
+<div class="main-content">
+    <div class="container">
+        <h1>Japanese Vocabulary Practice</h1>
+        <!-- Input form to add words -->
+        <form id="vocab-form">
+            <div>
+                <label for="jpWord">Japanese Word:</label>
+                <input type="text" id="jpWord" required placeholder="e.g. 猫 (ねこ)"/>
+            </div>
+            <div>
+                <label for="enWord">English Translation:</label>
+                <input type="text" id="enWord" required placeholder="e.g. cat"/>
+            </div>
+            <button type="submit">Add Word</button>
+        </form>
+
+        <!-- Mode selection buttons -->
+        <div class="mode-buttons">
+            <button id="random-mode-btn">Random Word Mode</button>
+            <button id="flashcard-mode-btn">Flashcard Mode</button>
+            <button id="quiz-mode-btn">Quiz Mode</button>
+        </div>
+
+        <!-- Random Word Mode Section -->
+        <div class="vocab-section" id="vocab-section">
+            <button id="random-btn">Show Random Word</button>
+            <div class="display-word" id="display-word" title="Click to reveal translation"></div>
+            <div class="display-translation" id="display-translation"></div>
+            <button id="reveal-btn" style="display:none;">Reveal Translation</button>
+        </div>
+
+        <!-- Flashcard Mode Section -->
+        <div class="flashcard-section" id="flashcard-section">
+            <button id="next-flashcard-btn">Next Flashcard</button>
+            <div class="flashcard-word" id="flashcard-word" title="Click to reveal translation"></div>
+            <div class="flashcard-translation" id="flashcard-translation"></div>
+            <div class="flashcard-controls">
+                <button id="flashcard-reveal-btn" style="display:none;">Reveal Translation</button>
+                <button id="flashcard-known-btn" style="display:none;">Mark as Known</button>
+                <button id="flashcard-review-btn" style="display:none;">Need Review</button>
+            </div>
+        </div>
+
+        <!-- Quiz Mode Section -->
+        <div class="quiz-section" id="quiz-section">
+            <div class="quiz-prompt" id="quiz-prompt"></div>
+            <input type="text" class="quiz-input" id="quiz-answer" placeholder="Type your answer"/>
+            <div class="quiz-controls">
+                <button id="quiz-submit-btn">Submit Answer</button>
+                <button id="quiz-next-btn" style="display:none;">Next Question</button>
+            </div>
+            <div class="quiz-score" id="quiz-score">Score: 0 correct, 0 attempted</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// =====================
+// Data and Setup
+// =====================
+
+// Current session vocabulary (not loaded until user chooses)
+let vocabList = []; 
+// Stored vocabulary (from localStorage, shown in sidebar)
+let storedData = [];
+
+// Load from localStorage (if any)
+const savedVocab = localStorage.getItem('vocabList');
+if (savedVocab) {
+    storedData = JSON.parse(savedVocab);
+}
+
+// Elements
+const form = document.getElementById('vocab-form');
+const jpInput = document.getElementById('jpWord');
+const enInput = document.getElementById('enWord');
+
+// Sections
+const vocabSection = document.getElementById('vocab-section');
+const flashcardSection = document.getElementById('flashcard-section');
+const quizSection = document.getElementById('quiz-section');
+
+// Mode Buttons
+const randomModeBtn = document.getElementById('random-mode-btn');
+const flashcardModeBtn = document.getElementById('flashcard-mode-btn');
+const quizModeBtn = document.getElementById('quiz-mode-btn');
+
+// Random Mode Elements
+const randomBtn = document.getElementById('random-btn');
+const displayWord = document.getElementById('display-word');
+const displayTranslation = document.getElementById('display-translation');
+const revealBtn = document.getElementById('reveal-btn');
+
+// Flashcard Mode Elements
+const nextFlashcardBtn = document.getElementById('next-flashcard-btn');
+const flashcardWord = document.getElementById('flashcard-word');
+const flashcardTranslation = document.getElementById('flashcard-translation');
+const flashcardRevealBtn = document.getElementById('flashcard-reveal-btn');
+const flashcardKnownBtn = document.getElementById('flashcard-known-btn');
+const flashcardReviewBtn = document.getElementById('flashcard-review-btn');
+
+// Quiz Mode Elements
+const quizPrompt = document.getElementById('quiz-prompt');
+const quizAnswer = document.getElementById('quiz-answer');
+const quizSubmitBtn = document.getElementById('quiz-submit-btn');
+const quizNextBtn = document.getElementById('quiz-next-btn');
+const quizScoreElem = document.getElementById('quiz-score');
+
+// Sidebar Elements
+const storedListElem = document.getElementById('stored-list');
+const useStoredBtn = document.getElementById('use-stored-btn');
+
+// Quiz State
+let quizCurrentWord = null;
+let quizScore = 0;
+let quizAttempted = 0;
+
+// =====================
+// Initialize Sidebar with storedData
+// =====================
+function renderStoredList() {
+    storedListElem.innerHTML = '';
+    if (storedData.length > 0) {
+        storedData.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.textContent = `${item.jp} = ${item.en}`;
+
+            // Create a delete (X) button
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'X';
+            deleteBtn.classList.add('delete-btn');
+            deleteBtn.title = "Delete this word";
+            deleteBtn.addEventListener('click', () => {
+                removeStoredWord(index);
+            });
+
+            li.appendChild(deleteBtn);
+            storedListElem.appendChild(li);
+        });
+    } else {
+        const li = document.createElement('li');
+        li.textContent = 'No saved words.';
+        storedListElem.appendChild(li);
+    }
+}
+renderStoredList();
+
+function removeStoredWord(index) {
+    // Remove the word from storedData
+    storedData.splice(index, 1);
+    // Update localStorage
+    localStorage.setItem('vocabList', JSON.stringify(storedData));
+    // Re-render the sidebar list
+    renderStoredList();
+
+    // If you also want to remove it from vocabList if currently loaded:
+    // vocabList = vocabList.filter((w, i) => {
+    //     return !(w.jp === storedData[index].jp && w.en === storedData[index].en);
+    // });
+    // But since we already removed it, we don't have access to it here.
+    // A better way is to re-load the vocabList after pressing "Use" again,
+    // or simply instruct the user to hit "Use Stored Vocabulary" again to sync changes.
+}
+
+// Use button: load storedData into vocabList
+useStoredBtn.addEventListener('click', () => {
+    vocabList = [...storedData];
+    alert('Stored vocabulary loaded!');
+});
+
+// =====================
+// Add Vocabulary
+// =====================
+form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const jp = jpInput.value.trim();
+    const en = enInput.value.trim();
+
+    if (jp && en) {
+        // Add to vocabList
+        vocabList.push({ jp, en, known: false });
+        // Also add to storedData and save it, so it shows up in sidebar next time
+        storedData.push({ jp, en, known: false });
+        localStorage.setItem('vocabList', JSON.stringify(storedData));
+        
+        // Re-render the sidebar list
+        renderStoredList();
+        
+        jpInput.value = '';
+        enInput.value = '';
+        alert('Word added!');
+    }
+});
+
+// =====================
+// Mode Switching
+// =====================
+randomModeBtn.addEventListener('click', () => {
+    showSection('random');
+});
+flashcardModeBtn.addEventListener('click', () => {
+    showSection('flashcard');
+});
+quizModeBtn.addEventListener('click', () => {
+    showSection('quiz');
+});
+
+function showSection(mode) {
+    vocabSection.style.display = (mode === 'random') ? 'flex' : 'none';
+    flashcardSection.style.display = (mode === 'flashcard') ? 'flex' : 'none';
+    quizSection.style.display = (mode === 'quiz') ? 'flex' : 'none';
+    
+    // Reset fields
+    if (mode === 'random') {
+        displayWord.innerText = '';
+        displayTranslation.innerText = '';
+        displayTranslation.style.display = 'none';
+        revealBtn.style.display = 'none';
+    }
+
+    if (mode === 'flashcard') {
+        flashcardWord.innerText = '';
+        flashcardTranslation.innerText = '';
+        flashcardTranslation.style.display = 'none';
+        flashcardRevealBtn.style.display = 'none';
+        flashcardKnownBtn.style.display = 'none';
+        flashcardReviewBtn.style.display = 'none';
+    }
+
+    if (mode === 'quiz') {
+        startQuiz();
+    }
+}
+
+// =====================
+// Random Word Mode
+// =====================
+randomBtn.addEventListener('click', () => {
+    if (vocabList.length === 0) {
+        alert('No words have been loaded! Click "Use Stored Vocabulary" in the sidebar or add new words.');
+        return;
+    }
+    displayTranslation.style.display = 'none';
+    revealBtn.style.display = 'none';
+    displayTranslation.innerText = '';
+
+    const randomIndex = Math.floor(Math.random() * vocabList.length);
+    const selected = vocabList[randomIndex];
+
+    displayWord.innerText = selected.jp;
+    displayWord.dataset.en = selected.en;
+    displayWord.dataset.revealed = 'false';
+});
+
+displayWord.addEventListener('click', revealRandomTranslation);
+revealBtn.addEventListener('click', revealRandomTranslation);
+
+function revealRandomTranslation() {
+    if (displayWord.innerText && displayWord.dataset.revealed === 'false') {
+        displayTranslation.innerText = displayWord.dataset.en;
+        displayTranslation.style.display = 'block';
+        revealBtn.style.display = 'none';
+        displayWord.dataset.revealed = 'true';
+    }
+}
+
+displayWord.addEventListener('mouseover', () => {
+    if (displayWord.innerText && displayWord.dataset.revealed === 'false') {
+        revealBtn.style.display = 'block';
+    }
+});
+displayWord.addEventListener('mouseout', () => {
+    if (displayWord.dataset.revealed === 'false') {
+        revealBtn.style.display = 'none';
+    }
+});
+
+// =====================
+// Flashcard Mode
+// =====================
+nextFlashcardBtn.addEventListener('click', showNextFlashcard);
+
+function showNextFlashcard() {
+    if (vocabList.length === 0) {
+        alert('No words loaded yet! Click "Use Stored Vocabulary" or add some words.');
+        return;
+    }
+    flashcardTranslation.style.display = 'none';
+    flashcardTranslation.innerText = '';
+    flashcardRevealBtn.style.display = 'none';
+    flashcardKnownBtn.style.display = 'none';
+    flashcardReviewBtn.style.display = 'none';
+
+    const randomIndex = Math.floor(Math.random() * vocabList.length);
+    const selected = vocabList[randomIndex];
+
+    flashcardWord.innerText = selected.jp;
+    flashcardWord.dataset.en = selected.en;
+    flashcardWord.dataset.index = randomIndex; 
+
+    flashcardRevealBtn.style.display = 'block';
+}
+
+flashcardWord.addEventListener('click', revealFlashcard);
+flashcardRevealBtn.addEventListener('click', revealFlashcard);
+
+function revealFlashcard() {
+    if (flashcardWord.innerText && flashcardTranslation.style.display === 'none') {
+        flashcardTranslation.innerText = flashcardWord.dataset.en;
+        flashcardTranslation.style.display = 'block';
+
+        flashcardKnownBtn.style.display = 'inline-block';
+        flashcardReviewBtn.style.display = 'inline-block';
+    }
+}
+
+// Marking Known or Review
+flashcardKnownBtn.addEventListener('click', () => {
+    const idx = flashcardWord.dataset.index;
+    if (idx !== undefined) {
+        vocabList[idx].known = true;
+        if (storedData[idx]) storedData[idx].known = true;
+        localStorage.setItem('vocabList', JSON.stringify(storedData));
+        alert(`Marked "${vocabList[idx].jp}" as known.`);
+    }
+});
+
+flashcardReviewBtn.addEventListener('click', () => {
+    const idx = flashcardWord.dataset.index;
+    if (idx !== undefined) {
+        vocabList[idx].known = false;
+        if (storedData[idx]) storedData[idx].known = false;
+        localStorage.setItem('vocabList', JSON.stringify(storedData));
+        alert(`Marked "${vocabList[idx].jp}" as need review.`);
+    }
+});
+
+// =====================
+// Quiz Mode
+// =====================
+function startQuiz() {
+    if (vocabList.length === 0) {
+        alert('No words loaded! Click "Use Stored Vocabulary" or add words first.');
+        return;
+    }
+    quizScore = 0;
+    quizAttempted = 0;
+    quizScoreElem.innerText = `Score: ${quizScore} correct, ${quizAttempted} attempted`;
+    quizAnswer.value = '';
+    quizNextBtn.style.display = 'none';
+    quizSubmitBtn.style.display = 'inline-block';
+    loadQuizQuestion();
+}
+
+function loadQuizQuestion() {
+    if (vocabList.length === 0) return;
+    quizAnswer.value = '';
+    quizNextBtn.style.display = 'none';
+    quizSubmitBtn.style.display = 'inline-block';
+
+    const randomIndex = Math.floor(Math.random() * vocabList.length);
+    quizCurrentWord = vocabList[randomIndex];
+
+    // Show English, ask for Japanese
+    quizPrompt.innerText = `What is the Japanese for "${quizCurrentWord.en}"?`;
+}
+
+quizSubmitBtn.addEventListener('click', checkQuizAnswer);
+quizNextBtn.addEventListener('click', loadQuizQuestion);
+
+function checkQuizAnswer() {
+    const userAnswer = quizAnswer.value.trim();
+    quizAttempted++;
+
+    if (userAnswer === quizCurrentWord.jp) {
+        quizScore++;
+        alert('Correct!');
+    } else {
+        alert(`Incorrect. The correct answer is: ${quizCurrentWord.jp}`);
+    }
+
+    quizScoreElem.innerText = `Score: ${quizScore} correct, ${quizAttempted} attempted`;
+
+    quizSubmitBtn.style.display = 'none';
+    quizNextBtn.style.display = 'inline-block';
+}
+</script>
+</body>
+</html>
